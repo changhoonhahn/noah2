@@ -18,7 +18,9 @@ class Noah2(object):
     def _read_data(self): 
         ''' read data set with only the necessary columns 
         '''
-        if not os.path.isfile('../../dat/noah2.data.npy'):  
+        fdata = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 'dat/noah2.data.npy')
+
+        if not os.path.isfile(fdata):  
             # read full FEMA dataset 
             fema = self._read_data_full(participants=True) 
         
@@ -26,9 +28,10 @@ class Noah2(object):
             columns = self._columns()
 
             data = np.array([np.array(fema[col]) for col in columns]).T
-            np.save('../../dat/noah2.data.npy', data) 
+
+            np.save(fdata, data) 
         else: 
-            data = np.load('../../dat/noah2.data.npy')
+            data = np.load(fdata)
 
         return data 
     
@@ -44,9 +47,15 @@ class Noah2(object):
         '''
         # read in full data set 
         if participants: 
-            fema = aT.read('../../dat/noah2.participants.v0.0.csv')
+            fema = aT.read(
+                    os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 
+                                     'dat/noah2.participants.v0.0.csv'))
         else: 
-            fema = aT.read('../../dat/noah2.v0.0.csv')
+            fema = aT.read(
+                    os.path.join(
+                                 os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 
+                                     'dat/noah2.v0.0.csv'))
         return fema 
 
     def _columns(self): 
