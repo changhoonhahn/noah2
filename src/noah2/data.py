@@ -12,13 +12,15 @@ from astropy.table import Table as aT
 class Noah2(object): 
     ''' data object for NOAH2 project
     '''
-    def __init__(self): 
-        self.data = self._read_data()
+    def __init__(self, version='0.1'): 
+        self.data = self._read_data(version=version)
 
-    def _read_data(self): 
+    def _read_data(self, version='0.1'): 
         ''' read data set with only the necessary columns 
         '''
-        fdata = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 'dat/noah2.data.npy')
+        fdata =
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
+                     'dat/noah2.data.v%s.npy' % version)
 
         if not os.path.isfile(fdata):  
             # read full FEMA dataset 
@@ -35,7 +37,7 @@ class Noah2(object):
 
         return data 
     
-    def _read_data_full(self, participants=True): 
+    def _read_data_full(self, participants=True, version='0.1'): 
         ''' read in full dataset compiled in `nb/0_compile_data.ipynb`
 
         params
@@ -50,12 +52,12 @@ class Noah2(object):
             fema = aT.read(
                     os.path.join(
                             os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 
-                                     'dat/noah2.participants.v0.0.csv'))
+                                     'dat/noah2.participants.v%s.csv' % version))
         else: 
             fema = aT.read(
                     os.path.join(
                                  os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 
-                                     'dat/noah2.v0.0.csv'))
+                                     'dat/noah2.v%s.csv' % version))
         return fema 
 
     def _columns(self): 
