@@ -15,11 +15,10 @@ class Noah2(object):
     def __init__(self, version='0.1'): 
         self.data = self._read_data(version=version)
 
-    def _read_data(self, version='0.1'): 
+    def _read_data(self, version='0.1', split=None): 
         ''' read data set with only the necessary columns 
         '''
-        fdata =
-        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
+        fdata = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
                      'dat/noah2.data.v%s.npy' % version)
 
         if not os.path.isfile(fdata):  
@@ -34,8 +33,21 @@ class Noah2(object):
             np.save(fdata, data) 
         else: 
             data = np.load(fdata)
-
-        return data 
+    
+        if split is None: return data 
+    
+        # shuffle up the data 
+        np.random.seed(0)
+        ind = np.arange(data.shape[0])
+        np.random.shuffle(ind)
+        
+        Ntrain = int(0.9 * data.shape[0])
+        if split == 'train':  
+            return data[ind][:Ntrain]
+        elif split == 'test': 
+            return data[ind][Ntrain:]
+        else: 
+            raise ValueError
     
     def _read_data_full(self, participants=True, version='0.1'): 
         ''' read in full dataset compiled in `nb/0_compile_data.ipynb`
