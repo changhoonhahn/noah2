@@ -63,8 +63,14 @@ class Noah2(object):
             # only community properties 
             columns = self._columns()[1:8]
         elif columns == 'props+': 
-            # only community properties 
+            # only community properties + some CRS
             columns = self._columns()[1:8] + ['s_c350', 's_c420', 's_c450']
+        elif columns == 'oprops': 
+            # outcome and community properties 
+            columns = self._columns()[:8]
+        elif columns == 'oprops+': 
+            # outcome and community properties + some CRS
+            columns = self._columns()[:8] + ['s_c350', 's_c420', 's_c450']
         elif columns == 'crs_lowimpact': 
             # only low impact CRS activities
             columns = self._crs_lowimpact_activities()
