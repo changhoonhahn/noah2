@@ -20,6 +20,7 @@ def train_NDE_nonpart(iseed, hr=12, gpu=True):
         "#SBATCH --time=%s:59:59" % str(hr-1).zfill(2),
         "#SBATCH --export=ALL", 
         ['', "#SBATCH --gres=gpu:1"][gpu], 
+        "#SBATCH --mem=8G", 
         "#SBATCH --output=%s" % ofile, 
         "#SBATCH --mail-type=all",
         "#SBATCH --mail-user=chhahn@princeton.edu",
@@ -58,6 +59,7 @@ def train_NDE_binary(iseed, binary, hr=12, gpu=True):
         "#SBATCH --time=%s:59:59" % str(hr-1).zfill(2),
         "#SBATCH --export=ALL", 
         ['', "#SBATCH --gres=gpu:1"][gpu], 
+        "#SBATCH --mem=8G", 
         "#SBATCH --output=%s" % ofile, 
         "#SBATCH --mail-type=all",
         "#SBATCH --mail-user=chhahn@princeton.edu",
@@ -83,6 +85,6 @@ def train_NDE_binary(iseed, binary, hr=12, gpu=True):
     return None
 
 
-train_NDE_nonpart(0, hr=1, gpu=True)
+#train_NDE_nonpart(0, hr=1, gpu=False)
 for code in [ 0,  2,  8,  9, 10, 27, 64, 66, 72, 75]: 
-    train_NDE_binary(0, code, hr=1, gpu=True)
+    train_NDE_binary(0, code, hr=6, gpu=False)

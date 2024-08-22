@@ -115,6 +115,7 @@ def Objective(trial):
     optimizer = optim.Adam(flow.parameters(), lr=lrate)
 
     best_epoch, best_valid_loss, valid_losses = 0, np.inf, []
+    best_flow = None
     for epoch in range(num_iter):
         # train 
         train_loss = 0.
@@ -155,11 +156,11 @@ def Objective(trial):
 
     # save trained flow 
     fflow = os.path.join(output_dir, study_name, '%s.%i.pt' % (study_name, trial.number))
-    torch.save(best_flow, fflow)
+    if best_flow is not None: torch.save(best_flow, fflow)
 
     floss = os.path.join(output_dir, study_name, '%s.%i.loss' % (study_name, trial.number))
     with open(floss,'w') as f:
-        f.write(best_valid_loss)
+        f.write(str(best_valid_loss))
     f.close()
     return best_valid_loss
 
