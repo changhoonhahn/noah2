@@ -9,7 +9,7 @@ import torch
 from torch import nn
 from torch.utils.tensorboard.writer import SummaryWriter
 
-import otpuna 
+import optuna 
 from sbi import utils as Ut
 from sbi import inference as Inference
 
@@ -17,33 +17,46 @@ cuda = torch.cuda.is_available()
 device = ("cuda:0" if cuda else "cpu")
 
 #####################################################################
-# input 
-#####################################################################
-output_dir = sys.argv[1]
-
-#####################################################################
 # load training data
 #####################################################################
 DNoah = D.Noah2()
-data_train = DNoah._read_data(version='0.1', split='train') 
+
+data = DNoah.data(sample='non-participants', 
+                  columns='oprops', 
+                  unique_zipcode=False) 
 
 # log10 scale some of the columns to reduce dynamical scale
-data_train[:,0] = np.log10(data_train[:,0])
-data_train[:,3] = np.log10(data_train[:,3])
-data_train[:,4] = np.log10(data_train[:,4])
+data[:,0] = np.log10(data[:,0])
+data[:,3] = np.log10(data[:,3])
+data[:,4] = np.log10(data[:,4])
 
+# shuffle up the data 
+np.random.seed(0)
+ind = np.arange(data.shape[0])
+np.random.shuffle(ind)
 
-#####################################################################
-# initializing  qphi training
+# training/test split
+Ntrain = int(0.9 * data.shape[0])
+print('Ntrain= %i' % Ntrain)
+data_train  = data[ind][:Ntrain]
+
 #####################################################################
 # set prior 
+#####################################################################
 lower_bounds = torch.tensor([1])
 upper_bounds = torch.tensor([9])
 prior = Ut.BoxUniform(low=lower_bounds, high=upper_bounds, device=device)
 
+#####################################################################
+# initializing  qphi training
+#####################################################################
 # set up optuna 
 n_trials    = 1000
-study_name  = 'noah2.qphi'
+study_name  = 'noah2.qphi.nonpart'
+
+output_dir = '/scratch/gpfs/chhahn/noah/noah2/qphi/'
+if not os.path.isdir(output_dir): 
+    output_dir = '/Users/chahah/data/noah/noah2/qphi/'
 
 n_jobs = 1
 if not os.path.isdir(os.path.join(output_dir, study_name)):
@@ -64,7 +77,7 @@ def Objective(trial):
     n_blocks = trial.suggest_int("n_blocks", n_blocks_min, n_blocks_max)
     n_transf = trial.suggest_int("n_transf", n_transf_min,  n_transf_max)
     n_hidden = trial.suggest_int("n_hidden", n_hidden_min, n_hidden_max, log=True)
-    n_comp = trial.suggest_int("n_comp", 2, 20)
+    n_comp = trial.suggest_int("n_comp", 2, 5)
     
     # define NPE 
     neural_posterior = Ut.posterior_nn('made', 
