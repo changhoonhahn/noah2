@@ -4,8 +4,13 @@ utility functions
 
 
 '''
+import os
+import glob
 import numpy as np
 from scipy.special import erf, erfinv
+
+import torch
+import optuna 
 
 
 def cdf_transform(x, bounds):
@@ -35,3 +40,28 @@ def _inv_gaussian_cdf(x, mu, sigma):
 
     """
     return mu + sigma * np.sqrt(2) * erfinv(2 * x - 1)
+
+
+def read_best_ndes(study_dir, n_ensemble=5, device='cpu', verbose=False):
+    '''
+    '''
+    output_dir = os.path.dirname(study_dir)
+    study_name = os.path.basename(study_dir) 
+    storage    = 'sqlite:///%s/%s/%s.db' % (output_dir, study_name, study_name)
+
+    study = optuna.load_study(study_name=study_name, storage=storage)
+
+    nums = np.array([trial.number for trial in study.trials])
+    vals = np.array([trial.value for trial in study.trials])
+
+    nums = nums[vals != None]
+    vals = vals[vals != None]
+    if verbose: print('%i models trained' % len(nums))
+   
+    ndes = [] 
+    for itrial in nums[np.argsort(vals)][:n_ensemble]: 
+        fnde = os.path.join(output_dir, study_name, '%s.%i.pt' % (study_name, itrial))
+        if verbose: print(fnde)
+        ndes.append(torch.load(fnde, map_location=device))
+
+    return ndes 
