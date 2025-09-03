@@ -20,6 +20,7 @@ def train_qphi_nonpart(iseed, hr=12, gpu=True):
         "#SBATCH --time=%s:59:59" % str(hr-1).zfill(2),
         "#SBATCH --export=ALL", 
         ['', "#SBATCH --gres=gpu:1"][gpu], 
+        "#SBATCH --mem=8G", 
         "#SBATCH --output=%s" % ofile, 
         "#SBATCH --mail-type=all",
         "#SBATCH --mail-user=chhahn@princeton.edu",
@@ -58,6 +59,7 @@ def train_qphi_binary(iseed, binary, hr=12, gpu=True):
         "#SBATCH --time=%s:59:59" % str(hr-1).zfill(2),
         "#SBATCH --export=ALL", 
         ['', "#SBATCH --gres=gpu:1"][gpu], 
+        "#SBATCH --mem=8G", 
         "#SBATCH --output=%s" % ofile, 
         "#SBATCH --mail-type=all",
         "#SBATCH --mail-user=chhahn@princeton.edu",
@@ -82,7 +84,8 @@ def train_qphi_binary(iseed, binary, hr=12, gpu=True):
     os.system('rm script.slurm')
     return None
 
+#for iseed in range(2, 10): train_qphi_nonpart(iseed, hr=6, gpu=False)
 
-train_qphi_nonpart(0, hr=1, gpu=True)
-for code in [ 0,  2,  8,  9, 10, 27, 64, 66, 72, 75]: 
-    train_qphi_binary(0, code, hr=1, gpu=True)
+for code in [0]: #,  2,  8,  9, 10, 27, 64, 66, 72, 75]: 
+    for iseed in range(1, 10): 
+        train_qphi_binary(iseed, code, hr=6, gpu=False)

@@ -85,6 +85,6 @@ def train_NDE_binary(iseed, binary, hr=12, gpu=True):
     return None
 
 
-#train_NDE_nonpart(0, hr=1, gpu=False)
-for code in [ 0,  2,  8,  9, 10, 27, 64, 66, 72, 75]: 
-    train_NDE_binary(0, code, hr=6, gpu=False)
+train_NDE_nonpart(1, hr=6, gpu=False)
+#for code in [0]: #,  2,  8,  9, 10, 27, 64, 66, 72, 75]: 
+#    train_NDE_binary(0, code, hr=6, gpu=False)

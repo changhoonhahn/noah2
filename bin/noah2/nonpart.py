@@ -1,7 +1,7 @@
 '''
 
-script to train series of flows for different combination of the ``binary'' CRS
-activities ('c360', 'c520', 'c530', 'c540', 'c610', 'c620', 'c630')
+train flow for non-participants to estimate 
+p( Y | community properties )  
 
 
 '''
@@ -12,53 +12,37 @@ from noah2 import data as D
 from causalflow import causalflow
 
 import torch
+import optuna 
 ##################################################################
 # input 
 ##################################################################
-arch = sys.argv[1] # archetype 
-code = int(sys.argv[2])
-output_dir = sys.argv[3]
+output_dir = sys.argv[1]
 
 ##################################################################
 cuda = torch.cuda.is_available()
 device = ("cuda:0" if cuda else "cpu")
 ##################################################################
-# read CRS participant data 
+# read CRS non-participant data 
 DNoah = D.Noah2()
 fema = DNoah._read_data_full()
 is_participant = DNoah._participants(fema)
-fema = fema[is_participant]
-
-metro = ((fema['RUCA1'] == 1))# | (fema['RUCA1'] == 2) | (fema['RUCA1'] == 3))
-micro = ((fema['RUCA1'] == 4) | (fema['RUCA1'] == 5) | (fema['RUCA1'] == 6))
-small = ((fema['RUCA1'] == 7) | (fema['RUCA1'] == 8) | (fema['RUCA1'] == 9))
-rural = ((fema['RUCA1'] == 10))
-arch_dict = {'metro': metro, 'micro': micro, 'small': small, 'rural': rural}
-if arch is not in arch_dict.keys(): 
-    raise ValueError
-
-columns = DNoah._columns()[:8] + ['s_%s' % c for c in ['c350', 'c420', 'c450']]
-column_labels = np.array(DNoah._column_labels()[:8] + ['c350', 'c420', 'c450'])
-
-# binary activity codes 
-binary_activities = ['c360', 'c520', 'c530', 'c540', 'c610', 'c620', 'c630']
-
-binary_data = np.array([np.array(fema[col]) for col in binary_activities]).T
-binary_data = (binary_data > 0).astype(int)
-
-binary_act_codes = np.zeros(len(fema)).astype(int) 
-for i in range(binary_data.shape[1]):
-    binary_act_codes += 2**i * binary_data[:,i]
+fema = fema[~is_participant]
 
 # compile training data
+columns = DNoah._columns()[:8]
 train_data = np.array([np.array(fema[col]) for col in columns]).T
 # reduce dynamical range  
-train_data[:,0] = np.log10(train_data[:,0])
+#train_data[:,0] = np.log10(train_data[:,0])
 train_data[:,3] = np.log10(train_data[:,3])
 train_data[:,4] = np.log10(train_data[:,4])
 
-# only keep data of specified archetype that performs set of binary activities  
-train_data = train_data[arch_dict[arch] & (binary_act_code == code)]
+Ntrain = int(train_data.shape[0] * 0.9)
+
+# shufftle training data 
+ishfl = np.arange(train_data.shape[0])
+np.random.seed(42) 
+np.random.shuffle(ishfl) 
+train_data = train_data[ishfl][:Ntrain] # reserve 10% for testing
 
 ##################################################################################
 # OPTUNA
@@ -68,11 +52,11 @@ Cflow = causalflow.CausalFlowA(device=device)
 
 # Optuna Parameters
 n_trials    = 1000
-n_jobs     = 1
-study_name = '%s.%i' % (arch, code) 
+n_jobs      = 1
+study_name  = 'flow.nonpart.nolog' 
 if not os.path.isdir(os.path.join(output_dir, study_name)):
     os.system('mkdir %s' % os.path.join(output_dir, study_name))
-storage    = 'sqlite:///%s/%s/%s.db' % (output_dir, study_name, study_name)
+storage     = 'sqlite:///%s/%s/%s.db' % (output_dir, study_name, study_name)
 n_startup_trials = 20
 
 n_blocks_min, n_blocks_max = 2, 5
@@ -101,11 +85,12 @@ def Objective(trial):
             batch_norm=True)
 
 
-   flow, best_valid_log_prob = Cflow._train_flow(train_data[:,0], train_data[:,1:],
-            outcome_range=[[-1.], [6.]],
-            training_batch_size=50,
-            learning_rate=lr,
-            verbose=False)
+    flow, best_valid_log_prob = Cflow._train_flow(train_data[:,0], train_data[:,1:],
+           outcome_range=[[0.], [1.e6]],
+           #outcome_range=[[-1.], [6.]],
+           training_batch_size=50,
+           learning_rate=lr,
+           verbose=False)
 
     # save trained NPE
     fflow = os.path.join(output_dir, study_name, '%s.%i.pt' % (study_name, trial.number))
